@@ -13,4 +13,13 @@ public interface UrlRepository extends JpaRepository<Url, Integer> {
     @Query(value = "INSERT INTO urls (url,shorten_url) VALUES (:url,:shortenedUrl)", nativeQuery = true)
     @Transactional
     void saveUrl(String url, String shortenedUrl);
+
+    @Query(value = "select url from urls where shorten_Url=:shortUrl", nativeQuery = true)
+    String retrieveUrl(String shortUrl);
+
+    @Query(value = "select COUNT(*) > 0 from urls where url=:url", nativeQuery = true)
+    boolean existsByUrl(String url);
+
+    @Query(value = "select shorten_url from urls where url=:url", nativeQuery = true)
+    String retrieveShortenedUrl(String url);
 }
