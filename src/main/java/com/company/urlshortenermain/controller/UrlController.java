@@ -3,8 +3,11 @@ package com.company.urlshortenermain.controller;
 import com.company.urlshortenermain.dto.UrlResponse;
 import com.company.urlshortenermain.service.UrlService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/api/v1/url")

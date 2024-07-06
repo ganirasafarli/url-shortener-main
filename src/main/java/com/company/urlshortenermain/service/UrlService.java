@@ -6,7 +6,10 @@ import com.company.urlshortenermain.exception.NotFoundException;
 import com.company.urlshortenermain.repository.UrlRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.util.InternalException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -23,10 +26,16 @@ public class UrlService {
     private final RedisService redisService;
 
     @Transactional
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 100))
     public UrlResponse shortenUrl(String originalUrl) {
         if (!StringUtils.hasText(originalUrl)) {
             throw new InvalidUrlException();
         }
+
+        if (originalUrl.matches(".*\\d.*")) {
+            throw new InternalException("Something bad happened.");
+        }
+
         String cachedShortenedUrl = getOriginalUrlFromRedis(originalUrl);
         if (StringUtils.hasText(cachedShortenedUrl)) {
             return createUrlResponse(cachedShortenedUrl);
@@ -38,6 +47,7 @@ public class UrlService {
         redisService.saveUrlToRedis(originalUrl, shortenedUrl);
         return createUrlResponse(shortenedUrl);
     }
+
 
     private UrlResponse createUrlResponse(String url) {
         return new UrlResponse(url);
