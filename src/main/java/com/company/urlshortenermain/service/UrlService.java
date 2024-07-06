@@ -1,12 +1,12 @@
 package com.company.urlshortenermain.service;
 
 import com.company.urlshortenermain.controller.exception.InvalidUrlException;
+import com.company.urlshortenermain.dto.UrlResponse;
 import com.company.urlshortenermain.exception.NotFoundException;
 import com.company.urlshortenermain.repository.UrlRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -17,46 +17,50 @@ import java.security.NoSuchAlgorithmException;
 @Service
 @RequiredArgsConstructor
 public class UrlService {
+
     private final UrlRepository urlRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final RedisService redisService;
 
     @Transactional
-    public String shortenUrl(String originalUrl) {
-        if (StringUtils.hasText(originalUrl)) {
-            String cachedShortenedUrl = redisTemplate.opsForValue().get(originalUrl);
-            if (StringUtils.hasText(cachedShortenedUrl)) {
-                return cachedShortenedUrl;
-            }
-           else if (urlRepository.existsByUrl(originalUrl)) {
-                return urlRepository.retrieveShortenedUrl(originalUrl);
-            }
-            String shortenedUrl = createShortUrl(originalUrl);
-            urlRepository.saveUrl(originalUrl, shortenedUrl);
-            saveUrlToRedis(originalUrl, shortenedUrl);
-            return shortenedUrl;
-        } else {
+    public UrlResponse shortenUrl(String originalUrl) {
+        if (!StringUtils.hasText(originalUrl)) {
             throw new InvalidUrlException();
         }
+        String cachedShortenedUrl = getOriginalUrlFromRedis(originalUrl);
+        if (StringUtils.hasText(cachedShortenedUrl)) {
+            return createUrlResponse(cachedShortenedUrl);
+        } else if (urlRepository.existsByUrl(originalUrl)) {
+            return createUrlResponse(urlRepository.retrieveShortenedUrl(originalUrl));
+        }
+        String shortenedUrl = createShortUrl(originalUrl);
+        urlRepository.saveUrl(originalUrl, shortenedUrl);
+        redisService.saveUrlToRedis(originalUrl, shortenedUrl);
+        return createUrlResponse(shortenedUrl);
     }
 
-    @Async
-    public void saveUrlToRedis(String shortenedUrl, String originalUrl) {
-        redisTemplate.opsForValue().set(shortenedUrl, originalUrl);
+    private UrlResponse createUrlResponse(String url) {
+        return new UrlResponse(url);
     }
 
-    public String retrieveOriginalUrl(String shortenedUrl) {
-        String cachedUrl = redisTemplate.opsForValue().get(shortenedUrl);
+    public String getOriginalUrlFromRedis(String originalUrl) {
+        return redisService.retrieveUrl(originalUrl);
+    }
+
+    public UrlResponse retrieveOriginalUrl(String shortenedUrl) {
+        String cachedUrl = redisService.retrieveUrl(shortenedUrl);
         if (StringUtils.hasText(cachedUrl)) {
-            return cachedUrl;
+            return createUrlResponse(cachedUrl);
         }
         String url = urlRepository.retrieveUrl(shortenedUrl);
         if (StringUtils.hasText(url)) {
-            saveUrlToRedis(shortenedUrl, url);
-            return url;
+            redisService.saveUrlToRedis(shortenedUrl, url);
+            return createUrlResponse(url);
         } else {
-            throw new NotFoundException("Url not found exception");
+            throw new NotFoundException("This url has not been shortened.");
         }
     }
+
 
     public String createShortUrl(String originalUrl) {
         try {
@@ -69,8 +73,7 @@ public class UrlService {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
+            return Long.toString(System.currentTimeMillis());
         }
     }
 }

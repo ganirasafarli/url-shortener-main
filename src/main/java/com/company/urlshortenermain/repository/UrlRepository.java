@@ -15,11 +15,14 @@ public interface UrlRepository extends JpaRepository<Url, Integer> {
     void saveUrl(String url, String shortenedUrl);
 
     @Query(value = "select url from urls where shorten_Url=:shortUrl", nativeQuery = true)
+    @Transactional
     String retrieveUrl(String shortUrl);
 
     @Query(value = "select COUNT(*) > 0 from urls where url=:url", nativeQuery = true)
+    @Transactional
     boolean existsByUrl(String url);
 
     @Query(value = "select shorten_url from urls where url=:url", nativeQuery = true)
+    @Transactional
     String retrieveShortenedUrl(String url);
 }

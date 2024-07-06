@@ -1,23 +1,25 @@
 package com.company.urlshortenermain.controller;
 
+import com.company.urlshortenermain.dto.UrlResponse;
 import com.company.urlshortenermain.service.UrlService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/url")
+@RequestMapping("/api/v1/url")
 @RequiredArgsConstructor
 public class UrlController {
 
     private final UrlService urlService;
 
     @PutMapping("/shorten")
-    public String shortenUrl(@RequestParam String url) {
-        return urlService.shortenUrl(url);
+    public ResponseEntity<UrlResponse> shortenUrl(@RequestParam String url) {
+        return ResponseEntity.ok(urlService.shortenUrl(url));
     }
 
     @GetMapping("/retrieve")
-    public String retrieveUrl(@RequestParam String shortUrl) {
-        return urlService.retrieveOriginalUrl(shortUrl);
+    public ResponseEntity<UrlResponse> retrieveUrl(@RequestParam String shortUrl) {
+        return ResponseEntity.ok(urlService.retrieveOriginalUrl(shortUrl));
     }
 }
