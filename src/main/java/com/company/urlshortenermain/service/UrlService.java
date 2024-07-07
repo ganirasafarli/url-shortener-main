@@ -7,7 +7,6 @@ import com.company.urlshortenermain.repository.UrlRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.InternalException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import java.security.NoSuchAlgorithmException;
 public class UrlService {
 
     private final UrlRepository urlRepository;
-    private final RedisTemplate<String, String> redisTemplate;
     private final RedisService redisService;
 
     @Transactional
