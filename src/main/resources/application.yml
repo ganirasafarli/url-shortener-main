@@ -1,0 +1,26 @@
+logging:
+  file:
+    path: /
+    name: log.txt
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: samganira
+    password: Sabah2019
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: HikariConnPool
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
